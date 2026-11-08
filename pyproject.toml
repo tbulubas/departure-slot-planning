@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slot-capacity"
+version = "0.1.0"
+description = "Departure slot capacity planning: quadratic vs falling trees delay cost, a time-indexed MILP (OR-Tools + SCIP)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Taras Bulubas", email = "taras.bulubas@gmail.com" }]
+license = "LicenseRef-All-Rights-Reserved"
+license-files = ["LICENSE"]
+classifiers = ["Private :: Do Not Upload"]
+dependencies = ["ortools>=9.10"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+plot = ["matplotlib>=3.8"]
+notebook = ["slot-capacity[plot]", "jupyterlab>=4", "ipywidgets>=8", "pandas>=2"]
+
+[project.scripts]
+slot-capacity = "slot_capacity.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]
