@@ -1,13 +1,14 @@
 # Departure Slot Capacity Planning
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tbulubas/departure-slot-planning/blob/main/notebooks/slot_capacity.ipynb)
+
 Departures of an airport compete for 10-minute departure slots of limited
 capacity. At the planning moment NOW every flight gets a slot — or a parking
 slot when none is left — so that the flights are delayed as little as
 possible, individually and in total, without delaying one flight heavily so
 that others can go on time.
 
-The project compares two delay costs in the same time-indexed MILP (OR-Tools
-+ SCIP):
+The project compares two delay costs in the same time-indexed MILP (OR-Tools + SCIP):
 
 - the **quadratic** cost `d²`, and
 - the **falling trees** model `d / (1 + q)`: linear in the delay `d`, with a
@@ -107,6 +108,11 @@ are pushed into the slots, shows the slot prices, the growth of the
 coefficients with the planning window, and closes with an interactive
 explorer: NOW, the planned departures and the capacity of every slot can be
 changed there.
+
+**Online, nothing to install:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tbulubas/departure-slot-planning/blob/main/notebooks/slot_capacity.ipynb)
+
+The link opens the notebook in Google Colab (a Google account is needed);
+its first code cell installs the package from GitHub.
 
 ## Tests
 
