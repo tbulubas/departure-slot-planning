@@ -18,9 +18,33 @@ Both keep the planned order, but they push the flights into the slots with
 very different force — visible in the slot prices — and the quadratic cost
 needs coefficients that grow with the square of the planning window.
 
+![Two flights, two slots: quadratic vs falling trees](images/departure-slot-linkedin.png)
+
 - Problem statement: [docs/problem-statement.md](docs/problem-statement.md)
 - Mathematical model: [docs/mip-model.md](docs/mip-model.md)
 - Background on delay costs: [docs/objective-functions.md](docs/objective-functions.md)
+
+## How it started
+
+Between 2013 and 2016 I worked on departure planning at Amadeus, responsible
+for modelling the objective function. In my free time I came up with an
+alternative to the quadratic delay cost and called it the *falling trees
+model*. I presented it once; it was never used. These are the hand sketches
+of the idea:
+
+| quadratic model | falling trees model |
+|---|---|
+| ![Hand sketch of the quadratic model](images/sketch-quadratic.jpg) | ![Hand sketch of the falling trees model](images/sketch-falling-trees.jpg) |
+
+Two flights planned at `t_p¹ = 10` and `t_p² = 20` compete for the slots 20
+and 30. *sol 1* keeps the planned order, *sol 2* swaps the flights. On the
+left every flight costs `~ (t_p − t)²`, the same parabola shifted; on the
+right `~ (t_p − t) / (1 + t_p)`, a straight line that leans further over the
+later the flight is planned — the lean angles fall, `α₀ > α₁ > α₂`, like
+trees felled by a blast. The sketches write the deviation as
+`d = t_p − t_s`; the code uses the delay `d = T(s) − T(p) ≥ 0`, the same
+quantity with the opposite sign. The picture at the top is the same example
+drawn exactly.
 
 ## Author
 
@@ -63,6 +87,7 @@ and open a new terminal.
 | `make venv`      | create `.venv` with Python 3.12 and install the project with all extras |
 | `make test`      | run the tests with pytest                                          |
 | `make run`       | solve the example; another instance with `ARGS="--now 06:20 --flights 06:20,06:25 --capacity 1"` |
+| `make image`     | render `images/departure-slot-linkedin.png` and `images/example-plan.png` |
 | `make notebook`  | open `notebooks/slot_capacity.ipynb` in JupyterLab                 |
 | `make notebook-check` | run all notebook cells headless and store the outputs         |
 | `make clean`     | remove caches and build metadata                                   |
@@ -109,6 +134,13 @@ coefficients with the planning window, and closes with an interactive
 explorer: NOW, the planned departures and the capacity of every slot can be
 changed there.
 
+The example — a morning bank of 24 departures with a runway inspection
+between 06:30 and 06:50 — planned with falling trees: departures per slot
+on top, every flight pushed from its planned time ○ to its slot ■, and the
+price of each slot below (what one more departure in it would save):
+
+![The example planned with falling trees](images/example-plan.png)
+
 **Online, nothing to install:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tbulubas/departure-slot-planning/blob/main/notebooks/slot_capacity.ipynb)
 
 The link opens the notebook in Google Colab (a Google account is needed);
@@ -131,9 +163,11 @@ src/slot_capacity/
   objective.py   quadratic and falling trees delay costs
   model.py       the time-indexed MILP (SCIP), slot prices, coefficient range
   solution.py    plan, independent verify(), metrics
-  draw.py        pictures of a plan
+  draw.py        pictures of a plan and of the two-flight example
   cli.py         command line interface
 tests/           pytest, exhaustive.py
 notebooks/       slot_capacity.ipynb
+scripts/         linkedin_image.py (make image), check_venv.py
+images/          hand sketches, the two-flight example, the example plan
 docs/            problem statement, model, background, IntelliJ
 ```

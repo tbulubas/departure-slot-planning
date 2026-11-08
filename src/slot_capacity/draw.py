@@ -143,3 +143,89 @@ def plot_prices(instance: SlotInstance, prices: dict[str, dict[int, float]], fig
         ax.set_title(label, fontsize=10)
     axes[0].set_ylabel("slot price (one more departure)")
     return fig
+
+
+def plot_two_flights(
+    planned: tuple[int, int] = (10, 20),
+    slots: tuple[int, int] = (20, 30),
+    forest: tuple[int, ...] = (0, 5, 15, 25),
+    figsize: tuple[float, float] = (12, 6.75),
+) -> Figure:
+    """The hand sketch, drawn exactly: two flights, two slots, both costs side by side.
+
+    Time is measured from NOW = 0. Every flight is a curve rising from its
+    planned time: the same parabola shifted for the quadratic cost, a line
+    with slope 1/(1 + p) for falling trees. Sol 1 keeps the planned order,
+    sol 2 swaps the flights. Faint curves of further planned times show the
+    family ("the forest").
+    """
+    from slot_capacity.objective import FALLING_TREES, QUADRATIC, Objective
+
+    p1, p2 = planned
+    s1, s2 = slots
+    t_max = s2 + 6
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
+    fig.subplots_adjust(left=0.06, right=0.98, top=0.80, bottom=0.17, wspace=0.16)
+    sol_colors = {"sol 1": ON_TIME, "sol 2": DELAY_MAP(0.8)}
+
+    for ax, name in zip(axes, (QUADRATIC, FALLING_TREES)):
+        o = Objective(name)
+
+        def f(p: int, t: float) -> float:
+            return o.cost(t - p, p)
+
+        ymax = 1.15 * max(f(p1, s2), f(p1, s1) + f(p2, s2))
+        for p in forest:
+            ts = [p + i * (t_max - p) / 200 for i in range(201)]
+            ax.plot(ts, [f(p, t) for t in ts], color="#c8c8c8", linewidth=1.0, zorder=1)
+        for k, p in enumerate((p1, p2), start=1):
+            ts = [p + i * (t_max - p) / 200 for i in range(201)]
+            ax.plot(ts, [f(p, t) for t in ts], color=CAPACITY, linewidth=2.0, zorder=2)
+            ax.annotate(f"flight {k}", xy=(t_max - 0.3, min(f(p, t_max), 0.96 * ymax)), ha="right",
+                        va="bottom", fontsize=10, color=CAPACITY)
+        for s in slots:
+            ax.axvline(s, color="#888888", linestyle="--", linewidth=1.0, zorder=0)
+            ax.text(s, 1.0, f"slot {s}", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+                    fontsize=9, color="#555555")
+
+        solutions = {"sol 1": ((p1, s1), (p2, s2)), "sol 2": ((p1, s2), (p2, s1))}
+        lines = []
+        for label, pairs in solutions.items():
+            costs = [f(p, s) for p, s in pairs]
+            color = sol_colors[label]
+            for k, ((p, s), c) in enumerate(zip(pairs, costs), start=1):
+                ax.plot(s, c, "o", ms=11, color=color, mec="white", mew=1.5, zorder=4, clip_on=False)
+                ax.text(s, c, str(k), ha="center", va="center", fontsize=8, color="white", clip_on=False,
+                        fontweight="bold", zorder=5)
+            (pa, sa), (pb, sb) = pairs
+            ax.plot([sa, sb], [costs[0], costs[1]], color=color, linewidth=1.2, linestyle=":", zorder=3)
+            terms = " + ".join(f"{c:.3g}" for c in costs)
+            lines.append((label, color, f"{label}: {terms} = {sum(costs):.3g}", sum(costs)))
+        best = min(lines, key=lambda item: item[3])[0]
+        for i, (label, color, text, _) in enumerate(lines):
+            mark = "  ✓ optimal" if label == best else ""
+            ax.text(0.03, 0.95 - 0.075 * i, text + mark, transform=ax.transAxes, fontsize=11,
+                    color=color, fontweight="bold" if label == best else "normal", va="top")
+
+        ax.set_xlim(-1, t_max)
+        ax.set_ylim(0, ymax)
+        ticks = {0: "NOW", **{s: str(s) for s in slots}}
+        for k, p in enumerate((p1, p2), start=1):
+            ticks[p] = f"{p}\n$T(p)_{k}$"
+        ax.set_xticks(sorted(ticks))
+        ax.set_xticklabels([ticks[t] for t in sorted(ticks)])
+        ax.set_xlabel("sequenced time $T(s)$, minutes after NOW")
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.set_title(r"quadratic  $f = d^2$" if name == QUADRATIC
+                     else r"falling trees  $f = d\,/\,(1 + T(p))$", fontsize=13, pad=18)
+    axes[0].set_ylabel("delay cost of the flight")
+
+    fig.suptitle("Who should wait? Two flights, two slots, two delay costs", fontsize=16, fontweight="bold",
+                 y=0.97)
+    fig.text(0.5, 0.885, "Both keep the planned order. The quadratic cost bends every flight the same way; "
+             "falling trees stays linear and lets later flights lean further over.",
+             ha="center", fontsize=11, color="#444444")
+    fig.text(0.5, 0.035, "sol 1: flights in planned order (1 → slot 20, 2 → slot 30)     "
+             "sol 2: swapped (1 → slot 30, 2 → slot 20)     grey: flights planned at 0, 5, 15, 25",
+             ha="center", fontsize=9.5, color="#555555")
+    return fig

@@ -9,6 +9,7 @@
 #   make venv      create .venv and install the project with all extras
 #   make test      run the tests
 #   make run       solve the example instance (override with ARGS="...")
+#   make image     render the images in images/ (README, LinkedIn)
 #   make notebook  open notebooks/slot_capacity.ipynb in JupyterLab
 #
 # The project uses Python 3.12 (PYTHON_VERSION). The base interpreter is found
@@ -32,13 +33,14 @@ STAMP := .venv/.installed
 ARGS ?= --example --prices
 
 .DEFAULT_GOAL := help
-.PHONY: help venv test run notebook notebook-check clean distclean recreate
+.PHONY: help venv test run image notebook notebook-check clean distclean recreate
 
 help:
 	@echo Targets:
 	@echo   make venv       create .venv and install the project with all extras
 	@echo   make test       run the tests with pytest
 	@echo   make run        solve the example; override with ARGS="--now 06:20 --flights ..."
+	@echo   make image      render images/departure-slot-linkedin.png and images/example-plan.png
 	@echo   make notebook   open notebooks/slot_capacity.ipynb in JupyterLab
 	@echo   make notebook-check  run all notebook cells headless and store the outputs
 	@echo   make clean      remove caches and build metadata
@@ -69,6 +71,9 @@ test: $(STAMP)
 
 run: $(STAMP)
 	$(VENV_PY) -m slot_capacity $(ARGS)
+
+image: $(STAMP)
+	$(VENV_PY) scripts/linkedin_image.py
 
 notebook: $(STAMP)
 	$(VENV_PY) -m jupyter lab notebooks/slot_capacity.ipynb

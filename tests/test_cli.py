@@ -48,3 +48,12 @@ def test_draw():
     assert len(fig.axes) == 3
     fig = plot_prices(inst, {"falling trees": prices})
     assert len(fig.axes) == 1
+
+
+def test_two_flights_figure():
+    from slot_capacity.draw import plot_two_flights
+
+    fig = plot_two_flights()
+    texts = [t.get_text() for ax in fig.axes for t in ax.texts]
+    assert any(t.startswith("sol 1: 100 + 100 = 200") and "optimal" in t for t in texts)
+    assert any(t.startswith("sol 1: 0.909 + 0.476 = 1.39") and "optimal" in t for t in texts)
